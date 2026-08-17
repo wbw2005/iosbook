@@ -16,13 +16,13 @@ enum BookSourceServiceError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .invalidURL:
-            return "??? URL"
+            return "无效的 URL"
         case .network(let error):
-            return "?????\(error.localizedDescription)"
+            return "网络错误：\(error.localizedDescription)"
         case .invalidResponse:
-            return "????????????"
+            return "书源返回了无法解析的数据"
         case .noCatalog:
-            return "???????????"
+            return "该书源没有配置目录接口"
         }
     }
 }
@@ -135,7 +135,7 @@ struct BookSourceService {
 
         var chapters: [Chapter] = []
         for (index, item) in list.enumerated() {
-            let title = Self.stringValue(at: source.catalogTitlePath, in: item) ?? "?\(index + 1)?"
+            let title = Self.stringValue(at: source.catalogTitlePath, in: item) ?? "第\(index + 1)章"
             let rawURL = Self.stringValue(at: source.catalogUrlPath, in: item) ?? ""
             let url = Self.absoluteURL(rawURL, prefix: source.catalogUrlPrefix)
             chapters.append(Chapter(title: title, url: url))
