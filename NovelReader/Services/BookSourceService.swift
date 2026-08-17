@@ -16,13 +16,13 @@ enum BookSourceServiceError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .invalidURL:
-            return "无效的 URL"
+            return "??? URL"
         case .network(let error):
-            return "网络错误：\(error.localizedDescription)"
+            return "?????\(error.localizedDescription)"
         case .invalidResponse:
-            return "书源返回了无法解析的数据"
+            return "????????????"
         case .noCatalog:
-            return "该书源没有配置目录接口"
+            return "???????????"
         }
     }
 }
@@ -135,7 +135,7 @@ struct BookSourceService {
 
         var chapters: [Chapter] = []
         for (index, item) in list.enumerated() {
-            let title = Self.stringValue(at: source.catalogTitlePath, in: item) ?? "第\(index + 1)章"
+            let title = Self.stringValue(at: source.catalogTitlePath, in: item) ?? "?\(index + 1)?"
             let rawURL = Self.stringValue(at: source.catalogUrlPath, in: item) ?? ""
             let url = Self.absoluteURL(rawURL, prefix: source.catalogUrlPrefix)
             chapters.append(Chapter(title: title, url: url))
@@ -194,7 +194,7 @@ struct BookSourceService {
     }
 
     static func value(at path: String, in object: Any) -> Any? {
-        var current: Any = object
+        var current: Any? = object
         var trimmedPath = path.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmedPath.hasPrefix("$.") {
             trimmedPath = String(trimmedPath.dropFirst(2))
@@ -209,14 +209,15 @@ struct BookSourceService {
                 if !key.isEmpty {
                     if let dict = current as? [String: Any] {
                         current = dict[key]
-                    } else if let array = current as? [Any], let idx = Int(key) {
-                        current = idx >= 0 && idx < array.count ? array[idx] : nil
+                    } else if let array = current as? [Any], let idx = Int(key), array.indices.contains(idx) {
+                        current = array[idx]
                     } else {
                         return nil
                     }
                 }
                 if let array = current as? [Any], let index = parseBracketIndex(rest) {
-                    current = index >= 0 && index < array.count ? array[index] : nil
+                    guard array.indices.contains(index) else { return nil }
+                    current = array[index]
                 } else if let dict = current as? [String: Any] {
                     let subKey = rest.trimmingCharacters(in: CharacterSet(charactersIn: "[]"))
                     current = dict[subKey]
@@ -227,7 +228,8 @@ struct BookSourceService {
                 if let dict = current as? [String: Any] {
                     current = dict[part]
                 } else if let array = current as? [Any], let index = Int(part) {
-                    current = index >= 0 && index < array.count ? array[index] : nil
+                    guard array.indices.contains(index) else { return nil }
+                    current = array[index]
                 } else {
                     return nil
                 }
